@@ -1,4 +1,4 @@
-package potfur.riskOfKt
+package potfur.riskOfKt.textures
 
 import com.lehaine.littlekt.file.vfs.VfsFile
 import com.lehaine.littlekt.file.vfs.readTexture
