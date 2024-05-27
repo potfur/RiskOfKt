@@ -14,7 +14,6 @@ import com.lehaine.littlekt.input.Key
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.RichTextureSlice
-import potfur.riskOfKt.textures.asRect
 import kotlin.time.Duration
 
 inline fun <T> SceneGraph<T>.player(animations: AnimationPlayer<RichTextureSlice>, input: Input, callback: Player.() -> Unit = {}) =
@@ -50,6 +49,7 @@ class Player(
         super.debugRender(batch, camera, shapeRenderer)
         ani.currentKeyFrame?.let {
             shapeRenderer.filledRectangle(it.asRect(position), color=Color.MAGENTA.withAlpha(0.25f).toFloatBits())
+            shapeRenderer.filledCircle(x, y, 2f, color=Color.CYAN.withAlpha(0.75f).toFloatBits())
         }
     }
 
@@ -58,7 +58,7 @@ class Player(
         ani.currentKeyFrame?.let {
             it.face(facing)
 
-            batch.draw(it, x, y)
+            batch.draw(it, x, y, it.center.x, it.center.y)
         }
     }
 }

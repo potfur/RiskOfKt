@@ -10,8 +10,18 @@ enum class Direction { LEFT, RIGHT }
 
 class RichTextureSlice(
     slice: TextureSlice,
-    private val direction: Direction,
+    center: Vec2f = Vec2f(slice.width / 2f, slice.height / 2f),
+    val direction: Direction = RIGHT,
 ) : TextureSlice(slice.texture, slice.x, slice.y, slice.width, slice.height) {
+    val offset = center
+
+    val center get() = when(isFlipH) {
+        false -> offset
+        true -> Vec2f(width - offset.x, offset.y)
+    }
+
+    fun asRect(at: Vec2f) =
+        Rect(at.x - center.x, at.y - center.y, width.toFloat(), height.toFloat())
 
     fun face(direction: Direction) {
         when (this.direction) {

@@ -6,6 +6,7 @@ import com.lehaine.littlekt.graphics.Texture
 import com.lehaine.littlekt.graphics.g2d.Animation
 import com.lehaine.littlekt.graphics.g2d.AnimationBuilder
 import com.lehaine.littlekt.graphics.g2d.TextureSlice
+import com.lehaine.littlekt.math.Vec2f
 import kotlin.time.Duration
 
 data class Animations(
@@ -29,7 +30,11 @@ data class Animations(
             animate { frames(0..second.size, 0, value) }
         }
 
-        infix fun TextureSlice.facing(direction: Direction) = RichTextureSlice(this, direction)
+        infix fun TextureSlice.facing(direction: Direction) = RichTextureSlice(this, direction = direction)
+        infix fun TextureSlice.center(at: Vec2f) = RichTextureSlice(this, at)
+
+        infix fun RichTextureSlice.facing(direction: Direction) = RichTextureSlice(this, offset, direction)
+        infix fun RichTextureSlice.center(at: Vec2f) = RichTextureSlice(this, at, direction)
     }
 
     companion object {

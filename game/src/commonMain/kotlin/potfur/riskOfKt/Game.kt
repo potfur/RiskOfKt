@@ -32,7 +32,7 @@ class Game(context: Context) : ContextListener(context) {
     }
 
     override suspend fun Context.start() {
-        val viewport = ExtendViewport(960, 540)
+        val viewport = ExtendViewport(200, 200)
 
         val tiles = Tiles.fromVFS(resourcesVfs) {
             "Tileset/Tileset.png" {
@@ -44,19 +44,19 @@ class Game(context: Context) : ContextListener(context) {
         val animations = Animations.fromVFS(resourcesVfs) {
             "Enemies/Alien5.png" {
                 Animations.ENEMY_ALIEN_5_IDLE of List(4) { i ->
-                    TextureSlice(it, i * 64, 0, 64, 64) facing RIGHT
+                    TextureSlice(it, i * 64, 0, 64, 64) facing RIGHT center Vec2f(24f, 32f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_WALK of List(8) { i ->
-                    TextureSlice(it, i * 64, 64, 64, 64) facing RIGHT
+                    TextureSlice(it, i * 64, 64, 64, 64) facing RIGHT center Vec2f(24f, 32f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_JUMP of List(6) { i ->
-                    TextureSlice(it, i * 64, 192, 64, 64) facing RIGHT
+                    TextureSlice(it, i * 64, 192, 64, 64) facing RIGHT center Vec2f(24f, 32f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_SHOT of List(8) { i ->
-                    TextureSlice(it, i * 64, 128, 64, 64) facing RIGHT
+                    TextureSlice(it, i * 64, 128, 64, 64) facing RIGHT center Vec2f(24f, 32f)
                 } duration 150.milliseconds
             }
         }
@@ -70,7 +70,7 @@ class Game(context: Context) : ContextListener(context) {
                 ani.registerState(animations[Animations.ENEMY_ALIEN_5_SHOT], 3) { shouldShot }
                 ani.registerState(animations[Animations.ENEMY_ALIEN_5_WALK], 2) { shouldWalk }
                 ani.registerState(animations[Animations.ENEMY_ALIEN_5_IDLE], 1)
-                position = Vec2f(0f, -48f)
+                position = Vec2f(30f, -18f)
             }
 
             platform(tiles[Tiles.PLATFORM_PLAIN_MEDIUM]) {
@@ -85,7 +85,7 @@ class Game(context: Context) : ContextListener(context) {
         }
 
         onRender { dt ->
-            gl.clearColor(Color.DARK_GRAY)
+            gl.clearColor(Color.GRAY)
             gl.clear(ClearBufferMask.COLOR_BUFFER_BIT)
 
             scene.update(dt)
