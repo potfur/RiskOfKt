@@ -15,7 +15,7 @@ class RichTextureSlice(
 ) : TextureSlice(slice.texture, slice.x, slice.y, slice.width, slice.height) {
     val offset = center
 
-    val center get() = when(isFlipH) {
+    val center get() = when (isFlipH) {
         false -> offset
         true -> Vec2f(width - offset.x, offset.y)
     }
@@ -39,3 +39,10 @@ class RichTextureSlice(
 }
 
 fun TextureSlice.asRect(at: Vec2f) = Rect(at.x, at.y, width.toFloat(), height.toFloat())
+
+operator fun Float.times(direction: Direction): Float = when (direction) {
+    RIGHT -> this
+    LEFT -> -this
+}
+
+operator fun Direction.times(value: Float): Float = value * this

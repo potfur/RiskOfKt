@@ -12,6 +12,7 @@ import com.lehaine.littlekt.math.Vec2f
 import com.lehaine.littlekt.util.viewport.ExtendViewport
 import potfur.riskOfKt.nodes.platform
 import potfur.riskOfKt.nodes.player
+import potfur.riskOfKt.nodes.world
 import potfur.riskOfKt.textures.Animations
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.Tiles
@@ -37,7 +38,7 @@ class Game(context: Context) : ContextListener(context) {
         val tiles = Tiles.fromVFS(resourcesVfs) {
             "Tileset/Tileset.png" {
                 Tiles.PLATFORM_PLAIN_BIG of TextureSlice(it, 0, 0, 48, 48)
-                Tiles.PLATFORM_PLAIN_MEDIUM of TextureSlice(it, 0, 48, 48, 24)
+                Tiles.PLATFORM_PLAIN_MEDIUM of TextureSlice(it, 0, 48, 48, 16)
             }
         }
 
@@ -64,17 +65,26 @@ class Game(context: Context) : ContextListener(context) {
         val scene = sceneGraph(this, viewport) {
             requestShowDebugInfo = true
 
+            world {
+                player(AnimationPlayer(), input) {
+                    ani.registerState(animations[Animations.ENEMY_ALIEN_5_JUMP], 4) { shouldJump }
+                    ani.registerState(animations[Animations.ENEMY_ALIEN_5_SHOT], 3) { shouldShot }
+                    ani.registerState(animations[Animations.ENEMY_ALIEN_5_WALK], 2) { shouldWalk }
+                    ani.registerState(animations[Animations.ENEMY_ALIEN_5_IDLE], 1)
+                    position = Vec2f(30f, -40f)
+                }
 
-            player(AnimationPlayer(), input) {
-                ani.registerState(animations[Animations.ENEMY_ALIEN_5_JUMP], 4) { shouldJump }
-                ani.registerState(animations[Animations.ENEMY_ALIEN_5_SHOT], 3) { shouldShot }
-                ani.registerState(animations[Animations.ENEMY_ALIEN_5_WALK], 2) { shouldWalk }
-                ani.registerState(animations[Animations.ENEMY_ALIEN_5_IDLE], 1)
-                position = Vec2f(30f, -18f)
-            }
+                platform(tiles[Tiles.PLATFORM_PLAIN_BIG]) {
+                    position = Vec2f(0f, 0f)
+                }
 
-            platform(tiles[Tiles.PLATFORM_PLAIN_MEDIUM]) {
-                position = Vec2f(0f, 0f)
+                platform(tiles[Tiles.PLATFORM_PLAIN_MEDIUM]) {
+                    position = Vec2f(-48f, -16f)
+                }
+
+                platform(tiles[Tiles.PLATFORM_PLAIN_MEDIUM]) {
+                    position = Vec2f(+48f, 16f)
+                }
             }
         }.apply {
             initialize()
