@@ -38,8 +38,6 @@ class RichTextureSlice(
     }
 }
 
-fun TextureSlice.asRect(at: Vec2f) = Rect(at.x, at.y, width.toFloat(), height.toFloat())
-
 operator fun Float.times(direction: Direction): Float = when (direction) {
     RIGHT -> this
     LEFT -> -this
