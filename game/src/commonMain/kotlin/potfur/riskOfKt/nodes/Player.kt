@@ -32,8 +32,9 @@ class Player(
     var shouldShot = false
     var shouldWalk = false
 
-    private val rayToFront get() = Vec2f(x + 20f * facing.asModifier(), y)
-    private val rayToGround get() = Vec2f(x, y + 20f)
+    private val walkingRay get() = Vec2f(x + 20f * facing.asModifier(), y)
+    private val jumpingRay get() = Vec2f(x, y - 20f)
+    private val fallingRay get() = Vec2f(x, y + 20f)
 
     private val rayPoints = mutableSetOf<Vec2f>()
 
@@ -52,8 +53,9 @@ class Player(
 
         ani.update(dt)
         rayPoints.clear()
-        if (castRay(rayToGround)) y += 0.97f
-        if (shouldWalk && castRay(rayToFront)) x += 0.25f * facing.asModifier()
+        if (!shouldJump && castRay(fallingRay)) y += 0.97f
+        if (shouldJump && castRay(jumpingRay)) y -= 0.45f
+        if (shouldWalk && castRay(walkingRay)) x += 0.25f * facing.asModifier()
     }
 
 
@@ -71,7 +73,7 @@ class Player(
         ani.currentKeyFrame?.let {
             shapeRenderer.filledRectangle(it.asRect(position), color = Color.MAGENTA.withAlpha(0.25f).toFloatBits())
         }
-        listOf(rayToFront, rayToGround).forEach {
+        listOf(walkingRay, jumpingRay, fallingRay).forEach {
             shapeRenderer.line(position, it, Color.CYAN.withAlpha(0.75f).toFloatBits())
         }
         shapeRenderer.filledCircle(x, y, 2f, color = Color.CYAN.withAlpha(0.75f).toFloatBits())

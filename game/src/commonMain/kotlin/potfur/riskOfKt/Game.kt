@@ -83,7 +83,7 @@ class Game(context: Context) : ContextListener(context) {
                 }
 
                 platform(tiles[Tiles.PLATFORM_PLAIN_MEDIUM]) {
-                    position = Vec2f(+48f, 16f)
+                    position = Vec2f(+48f, 48f)
                 }
             }
         }.apply {
