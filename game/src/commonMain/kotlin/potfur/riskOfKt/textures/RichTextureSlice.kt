@@ -15,10 +15,13 @@ enum class Direction {
     }
 }
 
+data class Box(val width: Float, val height: Float)
+
 class RichTextureSlice(
     slice: TextureSlice,
     center: Vec2f = Vec2f(slice.width / 2f, slice.height / 2f),
     val direction: Direction = RIGHT,
+    val box: Box = Box(slice.width.toFloat(), slice.height.toFloat()),
 ) : TextureSlice(slice.texture, slice.x, slice.y, slice.width, slice.height) {
     val offset = center
 
@@ -28,8 +31,7 @@ class RichTextureSlice(
             true -> Vec2f(width - offset.x, offset.y)
         }
 
-    fun asRect(at: Vec2f) =
-        Rect(at.x - center.x, at.y - center.y, width.toFloat(), height.toFloat())
+    fun centered(at: Vec2f) = Rect(at.x - box.width / 2, at.y - box.height / 2, box.width, box.height)
 
     fun face(direction: Direction) {
         when (this.direction) {

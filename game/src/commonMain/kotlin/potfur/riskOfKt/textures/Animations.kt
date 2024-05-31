@@ -32,7 +32,9 @@ data class Animations(
 
         infix fun TextureSlice.facing(direction: Direction) = RichTextureSlice(this, direction = direction)
 
-        infix fun RichTextureSlice.center(at: Vec2f) = RichTextureSlice(this, at, direction)
+        infix fun RichTextureSlice.center(at: Vec2f) = RichTextureSlice(this, at, direction, box)
+
+        infix fun RichTextureSlice.box(box: Box) = RichTextureSlice(this, center, direction, box)
     }
 
     companion object {

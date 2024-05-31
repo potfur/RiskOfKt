@@ -25,16 +25,16 @@ class Player(
     val input: Input,
 ) : RectNode2D() {
 
-    override val rect: Rect get() = ani.currentKeyFrame?.asRect(position) ?: Rect(position.x, position.y, 0f, 0f)
+    override val rect: Rect get() = ani.currentKeyFrame?.centered(position) ?: Rect(x, y, 0f, 0f)
 
     private var facing = RIGHT
     var shouldJump = false
     var shouldShot = false
     var shouldWalk = false
 
-    private val walkingRay get() = Vec2f(x + 20f * facing.asModifier(), y)
-    private val jumpingRay get() = Vec2f(x, y - 20f)
-    private val fallingRay get() = Vec2f(x, y + 20f)
+    private val walkingRay get() = Vec2f(x + rect.width / 2 * facing.asModifier(), y)
+    private val jumpingRay get() = Vec2f(x, y - rect.height / 2)
+    private val fallingRay get() = Vec2f(x, y + rect.height / 2)
 
     private val rayPoints = mutableSetOf<Vec2f>()
 
@@ -53,9 +53,9 @@ class Player(
 
         ani.update(dt)
         rayPoints.clear()
-        if (!shouldJump && castRay(fallingRay)) y += 0.97f
-        if (shouldJump && castRay(jumpingRay)) y -= 0.45f
-        if (shouldWalk && castRay(walkingRay)) x += 0.25f * facing.asModifier()
+        if (!shouldJump && this.castRay(fallingRay)) y += 0.97f
+        if (shouldJump && this.castRay(jumpingRay)) y -= 0.45f
+        if (shouldWalk && this.castRay(walkingRay)) x += 0.25f * facing.asModifier()
     }
 
 
@@ -71,19 +71,18 @@ class Player(
     override fun debugRender(batch: Batch, camera: Camera, shapeRenderer: ShapeRenderer) {
         super.debugRender(batch, camera, shapeRenderer)
         ani.currentKeyFrame?.let {
-            shapeRenderer.filledRectangle(it.asRect(position), color = Color.MAGENTA.withAlpha(0.25f).toFloatBits())
+            shapeRenderer.filledRectangle(it.centered(position), color = Color.MAGENTA.withAlpha(0.25f).toFloatBits())
         }
         listOf(walkingRay, jumpingRay, fallingRay).forEach {
             shapeRenderer.line(position, it, Color.CYAN.withAlpha(0.75f).toFloatBits())
         }
         shapeRenderer.filledCircle(x, y, 2f, color = Color.CYAN.withAlpha(0.75f).toFloatBits())
         rayPoints.forEach {
-            shapeRenderer.filledCircle(it.x, it.y, 2f, color = Color.YELLOW.toFloatBits())
+            shapeRenderer.filledCircle(it.x, it.y, 1f, color = Color.YELLOW.toFloatBits())
         }
     }
 
-    // TODO - thick ray seems ot be broken (?) - define bounding box to calc edge + mid rays
-    private fun castRay(to: Vec2f): Boolean =
+    private fun castRay(to: Vec2f) =
         castRay(x.toInt(), y.toInt(), to.x.toInt(), to.y.toInt()) { x, y ->
             rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
             world.hasCollision(x, y) == null

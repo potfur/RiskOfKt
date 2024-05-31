@@ -14,6 +14,7 @@ import potfur.riskOfKt.nodes.platform
 import potfur.riskOfKt.nodes.player
 import potfur.riskOfKt.nodes.world
 import potfur.riskOfKt.textures.Animations
+import potfur.riskOfKt.textures.Box
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.Tiles
 import kotlin.time.Duration.Companion.milliseconds
@@ -45,19 +46,19 @@ class Game(context: Context) : ContextListener(context) {
         val animations = Animations.fromVFS(resourcesVfs) {
             "Enemies/Alien5.png" {
                 Animations.ENEMY_ALIEN_5_IDLE of List(4) { i ->
-                    TextureSlice(it, i * 64, 0, 64, 64) facing RIGHT center Vec2f(24f, 32f)
+                    TextureSlice(it, i * 64, 0, 64, 64) facing RIGHT center Vec2f(24f, 30f) box Box(28f, 42f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_WALK of List(8) { i ->
-                    TextureSlice(it, i * 64, 64, 64, 64) facing RIGHT center Vec2f(24f, 32f)
+                    TextureSlice(it, i * 64, 64, 64, 64) facing RIGHT center Vec2f(24f, 30f) box Box(28f, 42f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_JUMP of List(6) { i ->
-                    TextureSlice(it, i * 64, 192, 64, 64) facing RIGHT center Vec2f(24f, 32f)
+                    TextureSlice(it, i * 64, 192, 64, 64) facing RIGHT center Vec2f(24f, 30f) box Box(28f, 42f)
                 } duration 150.milliseconds
 
                 Animations.ENEMY_ALIEN_5_SHOT of List(8) { i ->
-                    TextureSlice(it, i * 64, 128, 64, 64) facing RIGHT center Vec2f(24f, 32f)
+                    TextureSlice(it, i * 64, 128, 64, 64) facing RIGHT center Vec2f(24f, 30f) box Box(28f, 42f)
                 } duration 150.milliseconds
             }
         }
