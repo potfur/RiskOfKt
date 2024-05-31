@@ -14,7 +14,6 @@ import com.lehaine.littlekt.math.castRay
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.RichTextureSlice
-import potfur.riskOfKt.textures.times
 import kotlin.time.Duration
 
 inline fun World.player(animations: AnimationPlayer<RichTextureSlice>, input: Input, callback: Player.() -> Unit = {}) =
@@ -33,7 +32,7 @@ class Player(
     var shouldShot = false
     var shouldWalk = false
 
-    private val rayToFront get() = Vec2f(x + 20f * facing, y)
+    private val rayToFront get() = Vec2f(x + 20f * facing.asModifier(), y)
     private val rayToGround get() = Vec2f(x, y + 20f)
 
     private val rayPoints = mutableSetOf<Vec2f>()
@@ -54,7 +53,7 @@ class Player(
         ani.update(dt)
         rayPoints.clear()
         if (castRay(rayToGround)) y += 0.97f
-        if (shouldWalk && castRay(rayToFront)) x += 0.25f * facing
+        if (shouldWalk && castRay(rayToFront)) x += 0.25f * facing.asModifier()
     }
 
 

@@ -6,7 +6,14 @@ import com.lehaine.littlekt.math.Vec2f
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 
-enum class Direction { LEFT, RIGHT }
+enum class Direction {
+    LEFT, RIGHT;
+
+    fun asModifier(): Float = when (this) {
+        RIGHT -> 1f
+        LEFT -> -1f
+    }
+}
 
 class RichTextureSlice(
     slice: TextureSlice,
@@ -15,10 +22,11 @@ class RichTextureSlice(
 ) : TextureSlice(slice.texture, slice.x, slice.y, slice.width, slice.height) {
     val offset = center
 
-    val center get() = when (isFlipH) {
-        false -> offset
-        true -> Vec2f(width - offset.x, offset.y)
-    }
+    val center
+        get() = when (isFlipH) {
+            false -> offset
+            true -> Vec2f(width - offset.x, offset.y)
+        }
 
     fun asRect(at: Vec2f) =
         Rect(at.x - center.x, at.y - center.y, width.toFloat(), height.toFloat())
@@ -37,10 +45,3 @@ class RichTextureSlice(
         }
     }
 }
-
-operator fun Float.times(direction: Direction): Float = when (direction) {
-    RIGHT -> this
-    LEFT -> -this
-}
-
-operator fun Direction.times(value: Float): Float = value * this
