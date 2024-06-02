@@ -10,7 +10,6 @@ import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.Vec2f
-import com.lehaine.littlekt.math.castRay
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.RichTextureSlice
@@ -32,10 +31,6 @@ class Player(
     var shouldShot = false
     var shouldWalk = false
 
-    private val walkingRay get() = Vec2f(x + rect.width / 2 * facing.asModifier(), y)
-    private val jumpingRay get() = Vec2f(x, y - rect.height / 2)
-    private val fallingRay get() = Vec2f(x, y + rect.height / 2)
-
     private val rayPoints = mutableSetOf<Vec2f>()
 
     override fun update(dt: Duration) {
@@ -53,9 +48,9 @@ class Player(
 
         ani.update(dt)
         rayPoints.clear()
-        if (!shouldJump && this.castRay(fallingRay)) y += 0.97f
-        if (shouldJump && this.castRay(jumpingRay)) y -= 0.45f
-        if (shouldWalk && this.castRay(walkingRay)) x += 0.25f * facing.asModifier()
+        if (!shouldJump && hasNoFloor()) y += 0.97f
+        if (shouldJump && hasNoRoof()) y -= 0.45f
+        if (shouldWalk && hasNoWall()) x += 0.25f * facing.asModifier()
     }
 
 
@@ -73,18 +68,33 @@ class Player(
         ani.currentKeyFrame?.let {
             shapeRenderer.filledRectangle(it.centered(position), color = Color.MAGENTA.withAlpha(0.25f).toFloatBits())
         }
-        listOf(walkingRay, jumpingRay, fallingRay).forEach {
-            shapeRenderer.line(position, it, Color.CYAN.withAlpha(0.75f).toFloatBits())
-        }
         shapeRenderer.filledCircle(x, y, 2f, color = Color.CYAN.withAlpha(0.75f).toFloatBits())
         rayPoints.forEach {
             shapeRenderer.filledCircle(it.x, it.y, 1f, color = Color.YELLOW.toFloatBits())
         }
     }
 
-    private fun castRay(to: Vec2f) =
-        castRay(x.toInt(), y.toInt(), to.x.toInt(), to.y.toInt()) { x, y ->
-            rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
-            world.hasCollision(x, y) == null
-        }
+    private fun hasNoRoof() =
+        rect
+            .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { it to y - r.height / 2 } }
+            .all { (x, y) ->
+                rayPoints.add(Vec2f(x, y))
+                world.hasCollisionV(x.toInt(), y.toInt()) == null
+            }
+
+    private fun hasNoFloor() =
+        rect
+            .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { it to y + rect.height / 2 } }
+            .all { (x, y) ->
+                rayPoints.add(Vec2f(x, y))
+                world.hasCollisionV(x.toInt(), y.toInt()) == null
+            }
+
+    private fun hasNoWall() =
+        rect
+            .let { r -> listOf(y, r.y + 1, r.y2 - 1).map { x + rect.width / 2 * facing.asModifier() to it } }
+            .all { (x, y) ->
+                rayPoints.add(Vec2f(x, y))
+                world.hasCollisionH(x.toInt(), y.toInt()) == null
+            }
 }

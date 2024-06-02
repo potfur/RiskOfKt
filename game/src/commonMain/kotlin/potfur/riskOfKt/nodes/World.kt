@@ -13,13 +13,15 @@ inline fun <T> SceneGraph<T>.world(callback: (World.() -> Unit) = {}) =
     World().also(callback).addTo(root)
 
 class World() : Node2D() {
-    private val grid = mutableMapOf<Pair<Int, Int>, RectNode2D>()
+    private val gridH = mutableMapOf<Pair<Int, Int>, RectNode2D>()
+    private val gridV = mutableMapOf<Pair<Int, Int>, RectNode2D>()
 
-    fun hasCollision(x: Int, y: Int): RectNode2D? = grid[x to y]
+    fun hasCollisionH(x: Int, y: Int): RectNode2D? = gridH[x to y]
+    fun hasCollisionV(x: Int, y: Int): RectNode2D? = gridV[x to y]
 
     override fun ready() {
         super.ready()
-        grid.clear()
+        gridH.clear()
         nodes.nodesOfType<Platform>().forEach {
             addToGrid(it)
         }
@@ -27,17 +29,20 @@ class World() : Node2D() {
 
     override fun debugRender(batch: Batch, camera: Camera, shapeRenderer: ShapeRenderer) {
         super.debugRender(batch, camera, shapeRenderer)
-        grid.keys.forEach { (x, y) ->
-            shapeRenderer.rectangle(x.toFloat(), y.toFloat(), 1f, 1f, color = Color.RED.withAlpha(0.25f).toFloatBits())
+        (gridH.keys + gridV.keys).forEach { (x, y) ->
+            shapeRenderer.rectangle(x.toFloat(), y.toFloat(), 1f, 1f, color = Color.RED.withAlpha(0.5f).toFloatBits())
         }
     }
 
     private fun addToGrid(node: RectNode2D) {
         node.rect.let { rect ->
             (rect.x.toInt()..rect.x2.toInt()).forEach { x ->
-                (rect.y.toInt()..rect.y2.toInt()).forEach { y ->
-                    grid[x to y] = node
-                }
+                gridV[x to rect.y.toInt()] = node
+                gridV[x to rect.y2.toInt()] = node
+            }
+            (rect.y.toInt()..rect.y2.toInt()).forEach { y ->
+                gridH[rect.x.toInt() to y] = node
+                gridH[rect.x2.toInt() to y] = node
             }
         }
     }
