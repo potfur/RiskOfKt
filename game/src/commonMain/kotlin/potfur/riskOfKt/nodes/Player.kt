@@ -2,6 +2,7 @@ package potfur.riskOfKt.nodes
 
 import com.lehaine.littlekt.graphics.Camera
 import com.lehaine.littlekt.graphics.Color
+import com.lehaine.littlekt.graphics.Fonts
 import com.lehaine.littlekt.graphics.g2d.AnimationPlayer
 import com.lehaine.littlekt.graphics.g2d.Batch
 import com.lehaine.littlekt.graphics.g2d.shape.ShapeRenderer
@@ -13,13 +14,15 @@ import com.lehaine.littlekt.input.Key.ARROW_UP
 import com.lehaine.littlekt.input.Key.SPACE
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.Vec2f
+import com.lehaine.littlekt.math.castRay
 import com.lehaine.littlekt.util.milliseconds
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.RichTextureSlice
+import kotlin.math.absoluteValue
+import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 
 inline fun World.player(animations: AnimationPlayer<RichTextureSlice>, input: Input, callback: Player.() -> Unit = {}) =
@@ -44,7 +47,9 @@ data class Acc(val defaults: Vec2f, val limit: Vec2f, var vector: Vec2f = defaul
     operator fun plus(other: Vec2f) = set(vector + other)
     operator fun minus(other: Vec2f) = set(vector - other)
 
-    private fun Float.round(precision: Int = 1000): Float = (this * precision).roundToInt() / precision.toFloat()
+    private fun Float.round(precision: Int = 1000): Float =
+        (floor(this * precision) / precision.toFloat())
+            .let { if (it.absoluteValue < 0.02) 0f else it }
 }
 
 class Player(
@@ -106,32 +111,41 @@ class Player(
         rayPoints.forEach {
             shapeRenderer.filledCircle(it.x, it.y, 1f, color = Color.YELLOW.toFloatBits())
         }
+        Fonts.default.draw(batch, "${acc.vector}", x, y)
     }
 
-    // TODO - it happens that collision detection fails - rounding?
     private fun hasRoof() =
         rect
-            .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { it to y - r.height / 2 } }
-            .any { (x, y) ->
-                rayPoints.add(Vec2f(x, y))
-                world.hasCollisionV(x.toInt(), y.toInt()) != null
+            .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { Vec2f(it, y - r.height / 2) } }
+            .map { it to it + Vec2f(0f, acc.y) }
+            .castRay { x, y ->
+                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
+                world.hasCollisionV(x, y) == null
             }
+
 
     private fun hasFloor() =
         rect
-            .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { it to y + rect.height / 2 } }
-            .any { (x, y) ->
-                rayPoints.add(Vec2f(x, y))
-                world.hasCollisionV(x.toInt(), y.toInt()) != null
+            .let { r -> listOf(x, r.x, r.x2).map { Vec2f(it, y + r.height / 2) } }
+            .map { it to it + Vec2f(0f, acc.y) }
+            .castRay { x, y ->
+                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
+                world.hasCollisionV(x, y) == null
             }
+
 
     private fun hasWall() =
         rect
-            .let { r -> listOf(y, r.y + 1, r.y2 - 1).map { x + rect.width / 2 * facing.asModifier() to it } }
-            .any { (x, y) ->
-                rayPoints.add(Vec2f(x, y))
-                world.hasCollisionH(x.toInt(), y.toInt()) != null
+            .let { r -> listOf(y, r.y + 1, r.y2 - 1).map { Vec2f(x + r.width / 2 * facing.asModifier(), it) } }
+            .map { it to it + Vec2f(acc.x, 0f) }
+            .castRay { x, y ->
+                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
+                world.hasCollisionH(x, y) == null
             }
+
+    private fun List<Pair<Vec2f, Vec2f>>.castRay(rayCanPass: (Int, Int) -> Boolean) = any { (from, to) ->
+        !castRay(from.x.toInt(), from.y.toInt(), to.x.toInt(), to.y.toInt(), rayCanPass)
+    }
 }
 
 operator fun Vec2f.plus(other: Vec2f) = Vec2f(x + other.x, y + other.y)
