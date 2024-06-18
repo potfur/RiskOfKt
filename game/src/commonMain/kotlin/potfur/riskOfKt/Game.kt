@@ -85,9 +85,24 @@ class Game(context: Context) : ContextListener(context) {
                 }
 
                 platform(dirtGrass) {
-                    position = Vec2f(0f, 0f)
-                    width = 10f * style.width
-                    height = 3f * style.height
+                    x = -12
+                    y = 3
+                    width = 4
+                    height = 4
+                }
+
+                platform(dirtGrass) {
+                    x = -5
+                    y = 1
+                    width = 8
+                    height = 6
+                }
+
+                platform(dirtGrass) {
+                    x = 4
+                    y = 2
+                    width = 4
+                    height = 5
                 }
             }
         }.apply {

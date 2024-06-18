@@ -8,8 +8,14 @@ import com.lehaine.littlekt.graphics.g2d.shape.ShapeRenderer
 import com.lehaine.littlekt.graphics.toFloatBits
 import com.lehaine.littlekt.math.Rect
 
-inline fun World.platform(style: PlatformStyle, callback: (Platform.() -> Unit) = {}) =
-    addChild(Platform(style).also(callback))
+data class PlatformConfig(var x: Int, var y: Int, var width: Int, var height: Int)
+
+inline fun World.platform(style: PlatformStyle, callback: (PlatformConfig.() -> Unit) = {}) =
+    PlatformConfig(0, 0, style.width, style.height)
+        .apply {
+            callback(this)
+            addChild(Platform(this, style))
+        }
 
 data class PlatformStyle(
     val leftCorner: TextureSlice,
@@ -23,11 +29,16 @@ data class PlatformStyle(
     val height = floor.height
 }
 
-class Platform(val style: PlatformStyle) : RectNode2D() {
-    var width: Float = style.width.toFloat()
-    var height: Float = style.height.toFloat()
-    val x2 get() = rect.x2
-    val y2 get() = rect.y2
+class Platform(config: PlatformConfig, val style: PlatformStyle) : RectNode2D() {
+    init {
+        x = config.x * style.width.toFloat()
+        y = config.y * style.height.toFloat()
+    }
+
+    var width: Float = config.width * style.width.toFloat()
+    var height: Float = config.height * style.height.toFloat()
+    val x2 get() = x + width
+    val y2 get() = y + height
 
     override val rect by lazy { Rect(x, y, width, height) }
 
