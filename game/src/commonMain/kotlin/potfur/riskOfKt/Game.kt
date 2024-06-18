@@ -21,7 +21,7 @@ import potfur.riskOfKt.textures.TileSet
 import potfur.riskOfKt.textures.Tiles
 import kotlin.time.Duration.Companion.milliseconds
 
-enum class DirtGrass : TileSet { FLOOR_A }
+enum class DirtGrass : TileSet { LEFT_CORNER, RIGHT_CORNER, LEFT_WALL, RIGHT_WALL, FLOOR_A, FLOOR_B, FLOOR_C }
 
 enum class King : AnimationSet { IDLE, WALK, JUMP }
 
@@ -32,26 +32,32 @@ class Game(context: Context) : ContextListener(context) {
     }
 
     override suspend fun Context.start() {
-        val viewport = ExtendViewport(200, 200)
+        val viewport = ExtendViewport(100, 100)
 
         val tiles = Tiles.fromVFS(resourcesVfs) {
             "tiles.png" {
-                DirtGrass.FLOOR_A of TextureSlice(it, 128, 0, 16, 16)
+                DirtGrass.FLOOR_A of TextureSlice(it, 112, 0, 16, 15)
+                DirtGrass.FLOOR_B of TextureSlice(it, 112 + 16, 0, 16, 15)
+                DirtGrass.FLOOR_C of TextureSlice(it, 112 + 32, 0, 16, 15)
+                DirtGrass.LEFT_CORNER of TextureSlice(it, 112 + 16, 16, 16, 15)
+                DirtGrass.RIGHT_CORNER of TextureSlice(it, 112 + 32, 16, 16, 15)
+                DirtGrass.LEFT_WALL of TextureSlice(it, 112 + 48, 16, 16, 15)
+                DirtGrass.RIGHT_WALL of TextureSlice(it, 112 + 80, 16, 16, 15)
             }
         }
 
         val animations = Animations.fromVFS(resourcesVfs) {
             "characters.png" {
                 King.IDLE of listOf(
-                    TextureSlice(it, 0, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 24f)
+                    TextureSlice(it, 0, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f)
                 ) duration 150.milliseconds
 
                 King.WALK of (0..4).map { i ->
-                    TextureSlice(it, i * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 24f)
+                    TextureSlice(it, i * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f)
                 } duration 150.milliseconds
 
                 King.JUMP of listOf(
-                    TextureSlice(it, 6 * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 24f),
+                    TextureSlice(it, 6 * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f),
                 ) duration 150.milliseconds
             }
         }
@@ -67,14 +73,14 @@ class Game(context: Context) : ContextListener(context) {
                     position = Vec2f(0f, -40f)
                 }
 
-                platform(tiles[DirtGrass.FLOOR_A]) {
+                platform(tiles[DirtGrass.LEFT_CORNER]) {
                     position = Vec2f(0f, 0f)
                 }
-                platform(tiles[DirtGrass.FLOOR_A]) {
-                    position = Vec2f(16f, 16f)
+                platform(tiles[DirtGrass.FLOOR_B]) {
+                    position = Vec2f(16f, 0f)
                 }
-                platform(tiles[DirtGrass.FLOOR_A]) {
-                    position = Vec2f(32f, 32f)
+                platform(tiles[DirtGrass.RIGHT_CORNER]) {
+                    position = Vec2f(32f, 0f)
                 }
             }
         }.apply {
