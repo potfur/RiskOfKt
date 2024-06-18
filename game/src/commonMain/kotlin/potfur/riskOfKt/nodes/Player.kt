@@ -10,7 +10,6 @@ import com.lehaine.littlekt.input.Input
 import com.lehaine.littlekt.input.Key.ARROW_LEFT
 import com.lehaine.littlekt.input.Key.ARROW_RIGHT
 import com.lehaine.littlekt.input.Key.ARROW_UP
-import com.lehaine.littlekt.input.Key.SPACE
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.Vec2f
 import com.lehaine.littlekt.math.floor
@@ -64,7 +63,6 @@ class Player(
     private var facing = RIGHT
     private var acc = Acc(Vec2f(0f, 1.97f), Vec2f(1f, 2f))
     val shouldJump get() = acc.y < 0f
-    var shouldShot = false
     val shouldWalk get() = acc.x != 0f
 
     private val rayPoints = mutableSetOf<Vec2f>()
@@ -82,7 +80,6 @@ class Player(
             else -> facing
         }
 
-        if (input.isKeyPressed(SPACE)) shouldShot = true
         if (input.isKeyPressed(ARROW_UP)) acc += Vec2f(0f, -1.45f)
         if (input.areAnyKeysPressed(ARROW_LEFT, ARROW_RIGHT)) acc += Vec2f(0.25f * facing.asModifier(), 0f)
 
