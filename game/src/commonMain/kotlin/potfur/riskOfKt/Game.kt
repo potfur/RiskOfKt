@@ -10,6 +10,7 @@ import com.lehaine.littlekt.graphics.gl.ClearBufferMask
 import com.lehaine.littlekt.log.Logger
 import com.lehaine.littlekt.math.Vec2f
 import com.lehaine.littlekt.util.viewport.ExtendViewport
+import potfur.riskOfKt.nodes.PlatformStyle
 import potfur.riskOfKt.nodes.platform
 import potfur.riskOfKt.nodes.player
 import potfur.riskOfKt.nodes.world
@@ -21,7 +22,7 @@ import potfur.riskOfKt.textures.TileSet
 import potfur.riskOfKt.textures.Tiles
 import kotlin.time.Duration.Companion.milliseconds
 
-enum class DirtGrass : TileSet { LEFT_CORNER, RIGHT_CORNER, LEFT_WALL, RIGHT_WALL, FLOOR_A, FLOOR_B, FLOOR_C }
+enum class DirtGrass : TileSet { LEFT_CORNER, RIGHT_CORNER, LEFT_WALL, RIGHT_WALL, FLOOR_A, FLOOR_B, FLOOR_C, FILL }
 
 enum class King : AnimationSet { IDLE, WALK, JUMP }
 
@@ -32,19 +33,29 @@ class Game(context: Context) : ContextListener(context) {
     }
 
     override suspend fun Context.start() {
-        val viewport = ExtendViewport(100, 100)
+        val viewport = ExtendViewport(200, 200)
 
         val tiles = Tiles.fromVFS(resourcesVfs) {
             "tiles.png" {
                 DirtGrass.FLOOR_A of TextureSlice(it, 112, 0, 16, 15)
-                DirtGrass.FLOOR_B of TextureSlice(it, 112 + 16, 0, 16, 15)
-                DirtGrass.FLOOR_C of TextureSlice(it, 112 + 32, 0, 16, 15)
-                DirtGrass.LEFT_CORNER of TextureSlice(it, 112 + 16, 16, 16, 15)
-                DirtGrass.RIGHT_CORNER of TextureSlice(it, 112 + 32, 16, 16, 15)
-                DirtGrass.LEFT_WALL of TextureSlice(it, 112 + 48, 16, 16, 15)
-                DirtGrass.RIGHT_WALL of TextureSlice(it, 112 + 80, 16, 16, 15)
+                DirtGrass.FLOOR_B of TextureSlice(it, 128, 0, 16, 15)
+                DirtGrass.FLOOR_C of TextureSlice(it, 144, 0, 16, 15)
+                DirtGrass.LEFT_CORNER of TextureSlice(it, 128, 16, 16, 15)
+                DirtGrass.RIGHT_CORNER of TextureSlice(it, 144, 16, 16, 15)
+                DirtGrass.LEFT_WALL of TextureSlice(it, 160, 16, 16, 15)
+                DirtGrass.RIGHT_WALL of TextureSlice(it, 192, 16, 16, 15)
+                DirtGrass.FILL of TextureSlice(it, 176, 16, 16, 15)
             }
         }
+
+        val dirtGrass = PlatformStyle(
+            tiles[DirtGrass.LEFT_CORNER],
+            tiles[DirtGrass.RIGHT_CORNER],
+            tiles[DirtGrass.LEFT_WALL],
+            tiles[DirtGrass.RIGHT_WALL],
+            tiles[DirtGrass.FLOOR_B],
+            tiles[DirtGrass.FILL],
+        )
 
         val animations = Animations.fromVFS(resourcesVfs) {
             "characters.png" {
@@ -73,14 +84,10 @@ class Game(context: Context) : ContextListener(context) {
                     position = Vec2f(0f, -40f)
                 }
 
-                platform(tiles[DirtGrass.LEFT_CORNER]) {
+                platform(dirtGrass) {
                     position = Vec2f(0f, 0f)
-                }
-                platform(tiles[DirtGrass.FLOOR_B]) {
-                    position = Vec2f(16f, 0f)
-                }
-                platform(tiles[DirtGrass.RIGHT_CORNER]) {
-                    position = Vec2f(32f, 0f)
+                    width = 10f * style.width
+                    height = 3f * style.height
                 }
             }
         }.apply {
