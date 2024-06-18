@@ -2,7 +2,6 @@ package potfur.riskOfKt.nodes
 
 import com.lehaine.littlekt.graphics.Camera
 import com.lehaine.littlekt.graphics.Color
-import com.lehaine.littlekt.graphics.Fonts
 import com.lehaine.littlekt.graphics.g2d.AnimationPlayer
 import com.lehaine.littlekt.graphics.g2d.Batch
 import com.lehaine.littlekt.graphics.g2d.shape.ShapeRenderer
@@ -14,7 +13,7 @@ import com.lehaine.littlekt.input.Key.ARROW_UP
 import com.lehaine.littlekt.input.Key.SPACE
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.Vec2f
-import com.lehaine.littlekt.math.castRay
+import com.lehaine.littlekt.math.floor
 import com.lehaine.littlekt.util.milliseconds
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
@@ -23,6 +22,8 @@ import kotlin.math.absoluteValue
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import kotlin.time.Duration
 
 inline fun World.player(animations: AnimationPlayer<RichTextureSlice>, input: Input, callback: Player.() -> Unit = {}) =
@@ -85,9 +86,9 @@ class Player(
         if (input.isKeyPressed(ARROW_UP)) acc += Vec2f(0f, -1.45f)
         if (input.areAnyKeysPressed(ARROW_LEFT, ARROW_RIGHT)) acc += Vec2f(0.25f * facing.asModifier(), 0f)
 
-        if (!shouldJump && hasFloor()) acc = acc.set(y = 0f)
-        if (shouldJump && hasRoof()) acc = acc.set(y = 0f)
-        if (shouldWalk && hasWall()) acc = acc.set(x = 0f)
+        if (!shouldJump) acc = limitByFloor(acc)
+        if (shouldJump) acc = limitByCelling(acc)
+        if (shouldWalk) acc = limitByWall(acc)
 
         x += acc.x
         y += acc.y
@@ -111,40 +112,40 @@ class Player(
         rayPoints.forEach {
             shapeRenderer.filledCircle(it.x, it.y, 1f, color = Color.YELLOW.toFloatBits())
         }
-        Fonts.default.draw(batch, "${acc.vector}", x, y)
     }
 
-    private fun hasRoof() =
+    private fun limitByCelling(acc: Acc): Acc =
         rect
             .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { Vec2f(it, y - r.height / 2) } }
             .map { it to it + Vec2f(0f, acc.y) }
-            .castRay { x, y ->
-                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
-                world.hasCollisionV(x, y) == null
-            }
+            .castRay { x, y -> world.hasCollisionV(x.toInt(), y.toInt()) }
+            ?.let { acc.set(y = 0f) }
+            ?: acc
 
 
-    private fun hasFloor() =
+    private fun limitByFloor(acc: Acc): Acc =
         rect
             .let { r -> listOf(x, r.x, r.x2).map { Vec2f(it, y + r.height / 2) } }
             .map { it to it + Vec2f(0f, acc.y) }
-            .castRay { x, y ->
-                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
-                world.hasCollisionV(x, y) == null
-            }
+            .castRay { x, y -> world.hasCollisionV(x.toInt(), y.toInt()) }
+            ?.let { acc.set(y = 0f) }
+            ?: acc
 
-
-    private fun hasWall() =
+    private fun limitByWall(acc: Acc): Acc =
         rect
             .let { r -> listOf(y, r.y + 1, r.y2 - 1).map { Vec2f(x + r.width / 2 * facing.asModifier(), it) } }
             .map { it to it + Vec2f(acc.x, 0f) }
-            .castRay { x, y ->
-                rayPoints.add(Vec2f(x.toFloat(), y.toFloat()))
-                world.hasCollisionH(x, y) == null
-            }
+            .castRay { x, y -> world.hasCollisionH(x.toInt(), y.toInt()) }
+            ?.let { acc.set(x = 0f) }
+            ?: acc
 
-    private fun List<Pair<Vec2f, Vec2f>>.castRay(rayCanPass: (Int, Int) -> Boolean) = any { (from, to) ->
-        !castRay(from.x.toInt(), from.y.toInt(), to.x.toInt(), to.y.toInt(), rayCanPass)
+    private fun List<Pair<Vec2f, Vec2f>>.castRay(fn: (Float, Float) -> RectNode2D?): RectNode2D? {
+        return this.firstNotNullOfOrNull { (from, to) ->
+            (from iterateTo to).firstNotNullOfOrNull {
+                rayPoints.add(it)
+                fn(it.x, it.y)
+            }
+        }
     }
 }
 
@@ -153,3 +154,30 @@ operator fun Vec2f.minus(other: Vec2f) = Vec2f(x - other.x, y - other.y)
 operator fun Vec2f.times(other: Float) = Vec2f(x * other, y * other)
 operator fun Vec2f.div(other: Float) = Vec2f(x / other, y / other)
 
+
+infix fun Vec2f.iterateTo(other: Vec2f): List<Vec2f> {
+    val xD = (this.x iterateTo other.x).toList()
+    val yD = (this.y iterateTo other.y).toList()
+
+    val result = when {
+        xD.size > yD.size -> {
+            val d = yD.size.toFloat() / xD.size.toFloat()
+            xD.mapIndexed { i, it -> it to yD[(d * i).floor().roundToInt()] }
+        }
+
+        xD.size < yD.size -> {
+            val d = xD.size.toFloat() / yD.size.toFloat()
+            yD.mapIndexed { i, it -> xD[(d * i).floor().roundToInt()] to it }
+        }
+
+        else -> xD zip yD
+    }
+
+    return result.map { (x, y) -> Vec2f(x, y) }
+}
+
+private infix fun Float.iterateTo(other: Float): List<Float> =
+    when {
+        this <= other -> this.roundToLong()..other.roundToLong()
+        else -> this.roundToLong() downTo other.roundToLong()
+    }.map { it.toFloat() }
