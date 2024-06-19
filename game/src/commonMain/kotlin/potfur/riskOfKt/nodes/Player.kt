@@ -13,44 +13,15 @@ import com.lehaine.littlekt.input.Key.ARROW_UP
 import com.lehaine.littlekt.math.Rect
 import com.lehaine.littlekt.math.Vec2f
 import com.lehaine.littlekt.math.floor
-import com.lehaine.littlekt.util.milliseconds
 import potfur.riskOfKt.textures.Direction.LEFT
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.RichTextureSlice
-import kotlin.math.absoluteValue
-import kotlin.math.floor
-import kotlin.math.max
-import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Duration
 
 inline fun World.player(animations: AnimationPlayer<RichTextureSlice>, input: Input, callback: Player.() -> Unit = {}) =
     addChild(Player(this, animations, input).also(callback))
-
-data class Acc(val defaults: Vec2f, val limit: Vec2f, var vector: Vec2f = defaults) {
-    val x get() = vector.x
-    val y get() = vector.y
-
-    fun update(dt: Duration) {
-        vector -= (vector - defaults) / dt.milliseconds
-    }
-
-    fun set(value: Vec2f) = set(value.x, value.y)
-
-    fun set(x: Float = this.x, y: Float = this.y) = Acc(
-        defaults = defaults,
-        limit = limit,
-        vector = Vec2f(max(min(x, limit.x), -limit.x).round(), max(min(y, limit.y), -limit.y).round())
-    )
-
-    operator fun plus(other: Vec2f) = set(vector + other)
-    operator fun minus(other: Vec2f) = set(vector - other)
-
-    private fun Float.round(precision: Int = 1000): Float =
-        (floor(this * precision) / precision.toFloat())
-            .let { if (it.absoluteValue < 0.02) 0f else it }
-}
 
 class Player(
     val world: World,
@@ -61,7 +32,7 @@ class Player(
     override val rect: Rect get() = ani.currentKeyFrame?.centered(position) ?: Rect(x, y, 0f, 0f)
 
     private var facing = RIGHT
-    private var acc = Acc(Vec2f(0f, 1.97f), Vec2f(1f, 2f))
+    private var acc = Acceleration(Vec2f(0f, 1.97f), Vec2f(1f, 2f))
     val shouldJump get() = acc.y < 0f
     val shouldWalk get() = acc.x != 0f
 
@@ -111,7 +82,7 @@ class Player(
         }
     }
 
-    private fun limitByCelling(acc: Acc): Acc =
+    private fun limitByCelling(acc: Acceleration): Acceleration =
         rect
             .let { r -> listOf(x, r.x + 1, r.x2 - 1).map { Vec2f(it, y - r.height / 2) } }
             .map { it to it + Vec2f(0f, acc.y) }
@@ -120,7 +91,7 @@ class Player(
             ?: acc
 
 
-    private fun limitByFloor(acc: Acc): Acc =
+    private fun limitByFloor(acc: Acceleration): Acceleration =
         rect
             .let { r -> listOf(x, r.x, r.x2).map { Vec2f(it, y + r.height / 2) } }
             .map { it to it + Vec2f(0f, acc.y) }
@@ -128,7 +99,7 @@ class Player(
             ?.let { acc.set(y = 0f) }
             ?: acc
 
-    private fun limitByWall(acc: Acc): Acc =
+    private fun limitByWall(acc: Acceleration): Acceleration =
         rect
             .let { r -> listOf(y, r.y + 1, r.y2 - 1).map { Vec2f(x + r.width / 2 * facing.asModifier(), it) } }
             .map { it to it + Vec2f(acc.x, 0f) }
