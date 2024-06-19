@@ -9,26 +9,27 @@ import com.lehaine.littlekt.graphics.g2d.TextureSlice
 import com.lehaine.littlekt.math.Vec2f
 import kotlin.time.Duration
 
-interface AnimationSet
 
-data class Animations(
-    private val animations: Map<AnimationSet, Animation<RichTextureSlice>>,
+data class AnimationSet(
+    private val animations: Map<Type, Animation<RichTextureSlice>>,
 ) {
+    enum class Type { IDLE, WALK, JUMP }
+
     data class Builder(private val vfsFile: VfsFile) {
-        val elements = mutableMapOf<AnimationSet, Animation<RichTextureSlice>>()
+        val elements = mutableMapOf<Type, Animation<RichTextureSlice>>()
 
         suspend operator fun String.invoke(fn: suspend Builder.(Texture) -> Unit) {
             fn(this@Builder, vfsFile[this].readTexture())
         }
 
-        infix fun AnimationSet.of(slices: List<RichTextureSlice>) =
+        infix fun Type.of(slices: List<RichTextureSlice>) =
             this to slices
 
-        infix fun Pair<AnimationSet, List<RichTextureSlice>>.animate(fn: AnimationBuilder<RichTextureSlice>.(List<RichTextureSlice>) -> Unit) {
+        infix fun Pair<Type, List<RichTextureSlice>>.animate(fn: AnimationBuilder<RichTextureSlice>.(List<RichTextureSlice>) -> Unit) {
             elements[first] = AnimationBuilder(second).apply { fn(this, second) }.build()
         }
 
-        infix fun Pair<AnimationSet, List<RichTextureSlice>>.duration(value: Duration) {
+        infix fun Pair<Type, List<RichTextureSlice>>.duration(value: Duration) {
             animate { frames(0..second.size, 0, value) }
         }
 
@@ -40,10 +41,10 @@ data class Animations(
     }
 
     companion object {
-        suspend fun fromVFS(vfsFile: VfsFile, fn: suspend Builder.() -> Unit): Animations =
-            Animations(Builder(vfsFile).apply { fn(this) }.elements)
+        suspend fun fromVFS(vfsFile: VfsFile, fn: suspend Builder.() -> Unit): AnimationSet =
+            AnimationSet(Builder(vfsFile).apply { fn(this) }.elements)
     }
 
-    operator fun get(key: AnimationSet) = animations[key] ?: throw NoSuchElementException("No animation for key $key")
+    operator fun get(key: Type) = animations[key] ?: throw NoSuchElementException("No animation for key $key")
 }
 

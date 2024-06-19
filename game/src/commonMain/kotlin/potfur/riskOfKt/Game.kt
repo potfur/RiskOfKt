@@ -15,16 +15,21 @@ import potfur.riskOfKt.nodes.platform
 import potfur.riskOfKt.nodes.player
 import potfur.riskOfKt.nodes.world
 import potfur.riskOfKt.textures.AnimationSet
-import potfur.riskOfKt.textures.Animations
+import potfur.riskOfKt.textures.AnimationSet.Type.IDLE
+import potfur.riskOfKt.textures.AnimationSet.Type.JUMP
+import potfur.riskOfKt.textures.AnimationSet.Type.WALK
 import potfur.riskOfKt.textures.Box
 import potfur.riskOfKt.textures.Direction.RIGHT
 import potfur.riskOfKt.textures.TileSet
-import potfur.riskOfKt.textures.Tiles
+import potfur.riskOfKt.textures.TileSet.Type.FILL
+import potfur.riskOfKt.textures.TileSet.Type.FLOOR_A
+import potfur.riskOfKt.textures.TileSet.Type.FLOOR_B
+import potfur.riskOfKt.textures.TileSet.Type.FLOOR_C
+import potfur.riskOfKt.textures.TileSet.Type.LEFT_CORNER
+import potfur.riskOfKt.textures.TileSet.Type.LEFT_WALL
+import potfur.riskOfKt.textures.TileSet.Type.RIGHT_CORNER
+import potfur.riskOfKt.textures.TileSet.Type.RIGHT_WALL
 import kotlin.time.Duration.Companion.milliseconds
-
-enum class DirtGrass : TileSet { LEFT_CORNER, RIGHT_CORNER, LEFT_WALL, RIGHT_WALL, FLOOR_A, FLOOR_B, FLOOR_C, FILL }
-
-enum class King : AnimationSet { IDLE, WALK, JUMP }
 
 class Game(context: Context) : ContextListener(context) {
 
@@ -35,39 +40,39 @@ class Game(context: Context) : ContextListener(context) {
     override suspend fun Context.start() {
         val viewport = ExtendViewport(200, 200)
 
-        val tiles = Tiles.fromVFS(resourcesVfs) {
+        val platformStyle = TileSet.fromVFS(resourcesVfs) {
             "tiles.png" {
-                DirtGrass.FLOOR_A of TextureSlice(it, 112, 0, 16, 15)
-                DirtGrass.FLOOR_B of TextureSlice(it, 128, 0, 16, 15)
-                DirtGrass.FLOOR_C of TextureSlice(it, 144, 0, 16, 15)
-                DirtGrass.LEFT_CORNER of TextureSlice(it, 128, 16, 16, 15)
-                DirtGrass.RIGHT_CORNER of TextureSlice(it, 144, 16, 16, 15)
-                DirtGrass.LEFT_WALL of TextureSlice(it, 160, 16, 16, 15)
-                DirtGrass.RIGHT_WALL of TextureSlice(it, 192, 16, 16, 15)
-                DirtGrass.FILL of TextureSlice(it, 176, 16, 16, 15)
+                FLOOR_B of TextureSlice(it, 128, 0, 16, 15)
+                FLOOR_A of TextureSlice(it, 112, 0, 16, 15)
+                FLOOR_C of TextureSlice(it, 144, 0, 16, 15)
+                LEFT_CORNER of TextureSlice(it, 128, 16, 16, 15)
+                RIGHT_CORNER of TextureSlice(it, 144, 16, 16, 15)
+                LEFT_WALL of TextureSlice(it, 160, 16, 16, 15)
+                RIGHT_WALL of TextureSlice(it, 192, 16, 16, 15)
+                FILL of TextureSlice(it, 176, 16, 16, 15)
             }
+        }.let {
+            PlatformStyle(
+                leftCorner = it[LEFT_CORNER],
+                rightCorner = it[RIGHT_CORNER],
+                leftWall = it[LEFT_WALL],
+                rightWall = it[RIGHT_WALL],
+                floor = it[FLOOR_B],
+                fill = it[FILL],
+            )
         }
 
-        val dirtGrass = PlatformStyle(
-            tiles[DirtGrass.LEFT_CORNER],
-            tiles[DirtGrass.RIGHT_CORNER],
-            tiles[DirtGrass.LEFT_WALL],
-            tiles[DirtGrass.RIGHT_WALL],
-            tiles[DirtGrass.FLOOR_B],
-            tiles[DirtGrass.FILL],
-        )
-
-        val animations = Animations.fromVFS(resourcesVfs) {
+        val player = AnimationSet.fromVFS(resourcesVfs) {
             "characters.png" {
-                King.IDLE of listOf(
+                IDLE of listOf(
                     TextureSlice(it, 0, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f)
                 ) duration 150.milliseconds
 
-                King.WALK of (0..4).map { i ->
+                WALK of (0..4).map { i ->
                     TextureSlice(it, i * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f)
                 } duration 150.milliseconds
 
-                King.JUMP of listOf(
+                JUMP of listOf(
                     TextureSlice(it, 6 * 32, 40, 24, 24) facing RIGHT center Vec2f(16f, 12f) box Box(16f, 22f),
                 ) duration 150.milliseconds
             }
@@ -78,27 +83,27 @@ class Game(context: Context) : ContextListener(context) {
 
             world {
                 player(AnimationPlayer(), input) {
-                    ani.registerState(animations[King.JUMP], 4) { shouldJump }
-                    ani.registerState(animations[King.WALK], 2) { shouldWalk }
-                    ani.registerState(animations[King.IDLE], 1)
+                    ani.registerState(player[JUMP], 4) { shouldJump }
+                    ani.registerState(player[WALK], 2) { shouldWalk }
+                    ani.registerState(player[IDLE], 1)
                     position = Vec2f(0f, -40f)
                 }
 
-                platform(dirtGrass) {
+                platform(platformStyle) {
                     x = -12
                     y = 3
                     width = 4
                     height = 4
                 }
 
-                platform(dirtGrass) {
+                platform(platformStyle) {
                     x = -5
                     y = 1
                     width = 8
                     height = 6
                 }
 
-                platform(dirtGrass) {
+                platform(platformStyle) {
                     x = 4
                     y = 2
                     width = 4
